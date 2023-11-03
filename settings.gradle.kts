@@ -19,5 +19,3 @@ gitHooks {
     commitMsg { conventionalCommits() }
     createHooks()
 }
-
-rootProject.name = "Template-for-Kotlin-JVM-Projects"

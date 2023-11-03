@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.taskTree)
 }
 
-group = "org.danilopianini"
+group = "it.unibo.spe.compose"
 
 repositories {
     mavenCentral()
@@ -17,7 +17,8 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.stdlib)
-    testImplementation(libs.bundles.kotlin.testing)
+    implementation(libs.mariaDb.client)
+    testImplementation(libs.kotlin.test.junit)
 }
 
 kotlin {
@@ -32,7 +33,7 @@ kotlin {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnit()
     testLogging {
         showStandardStreams = true
         showCauses = true
