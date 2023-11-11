@@ -11,11 +11,3 @@ gradleEnterprise {
         publishOnFailure()
     }
 }
-
-gitHooks {
-    preCommit {
-        tasks("ktlintCheck")
-    }
-    commitMsg { conventionalCommits() }
-    createHooks()
-}
