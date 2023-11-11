@@ -9,4 +9,7 @@ data class CustomerImpl(
     override val firstName: String,
     override val lastName: String,
     override val birthDate: LocalDate,
-) : Customer
+) : Customer {
+    override fun clone(id: CustomerID, firstName: String, lastName: String, birthDate: LocalDate): Customer =
+        copy(id, firstName, lastName, birthDate)
+}

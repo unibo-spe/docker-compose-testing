@@ -4,6 +4,7 @@ import it.unibo.spe.compose.Customer
 import it.unibo.spe.compose.CustomerID
 import it.unibo.spe.compose.CustomerRepository
 import it.unibo.spe.compose.db.ConnectionFactory
+import java.lang.IllegalArgumentException
 import java.sql.Connection
 import java.sql.ResultSet
 
@@ -14,17 +15,14 @@ class SqlCustomerRepository(
 
     fun createTable(replaceIfPresent: Boolean = false) =
         updating(
-            query = "CREATE " + if (replaceIfPresent) {
-                "OR REPLACE "
-            } else {
-                "" + "TABLE $tableName (\n" +
-                    "${Customer::id.name} VARCHAR,\n" +
-                    "${Customer::firstName.name} VARCHAR,\n" +
-                    "${Customer::lastName.name} VARCHAR,\n" +
-                    "${Customer::birthDate.name} DATE,\n" +
-                    "CONSTRAINT ${tableName}_pk PRIMARY KEY (${Customer::id.name})\n" +
-                    ");"
-            },
+            query = "CREATE " +
+                if (replaceIfPresent) { "OR REPLACE " } else { "" } +
+                "TABLE $tableName (\n" +
+                "    ${Customer::id.name} VARCHAR(16) PRIMARY KEY,\n" +
+                "    ${Customer::firstName.name} VARCHAR(255),\n" +
+                "    ${Customer::lastName.name} VARCHAR(255),\n" +
+                "    ${Customer::birthDate.name} DATE\n" +
+                ");",
             expectedResult = 0,
         )
 
@@ -33,6 +31,7 @@ class SqlCustomerRepository(
     private fun <T> querying(query: String, action: (ResultSet) -> T): T =
         connecting { conn ->
             conn.createStatement().use {
+                println(query)
                 it.executeQuery(query).use(action)
             }
         }
@@ -40,6 +39,7 @@ class SqlCustomerRepository(
     private fun <T> updating(query: String, action: (Int) -> T): T =
         connecting { conn ->
             conn.createStatement().use {
+                println(query)
                 it.executeUpdate(query).let(action)
             }
         }
@@ -63,15 +63,15 @@ class SqlCustomerRepository(
         }
 
     override fun findById(id: CustomerID): Iterable<Customer> =
-        querying("SELECT * FROM $tableName WHERE ${Customer::id.name} = $id;") {
+        querying("""SELECT * FROM $tableName WHERE ${Customer::id.name} = "${id.value}";""") {
             it.retrieveAllCostumers()
         }
 
     override fun findByName(name: String): Iterable<Customer> =
         querying(
             "SELECT * FROM $tableName WHERE " +
-                "${Customer::firstName.name} LIKE $name OR " +
-                "${Customer::lastName.name} LIKE $name;",
+                """${Customer::firstName.name} LIKE "$name" OR """ +
+                """${Customer::lastName.name} LIKE "$name";""",
         ) { it.retrieveAllCostumers() }
 
     private fun Customer.toTupleString() =
@@ -84,10 +84,22 @@ class SqlCustomerRepository(
         )
 
     override fun update(oldId: CustomerID, customer: Customer) {
-        TODO("Implement me")
+        updating(
+            query = "UPDATE $tableName SET\n" +
+                "    ${Customer::id.name} = \"${customer.id.value}\",\n" +
+                "    ${Customer::firstName.name} = \"${customer.firstName}\",\n" +
+                "    ${Customer::lastName.name} = \"${customer.lastName}\",\n" +
+                "    ${Customer::birthDate.name} = \"${customer.birthDate}\"\n" +
+                """WHERE ${Customer::id.name} = "${oldId.value}";""",
+            expectedResult = 1,
+        )
     }
 
     override fun remove(id: CustomerID) {
-        TODO("Implement me")
+        updating("""DELETE FROM $tableName WHERE ${Customer::id.name} = "${id.value}";""") {
+            if (it != 1) {
+                throw IllegalArgumentException("Invalid customer id: $id")
+            }
+        }
     }
 }

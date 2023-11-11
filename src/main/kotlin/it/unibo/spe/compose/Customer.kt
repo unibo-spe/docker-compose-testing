@@ -17,6 +17,13 @@ interface Customer {
     val isCompany: Boolean
         get() = id is VatNumber
 
+    fun clone(
+        id: CustomerID = this.id,
+        firstName: String = this.firstName,
+        lastName: String = this.lastName,
+        birthDate: LocalDate = this.birthDate,
+    ): Customer
+
     companion object {
         @JvmStatic
         fun person(code: TaxCode, firstName: String, lastName: String, birthDate: LocalDate): Customer =
