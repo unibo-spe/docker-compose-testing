@@ -8,8 +8,6 @@ import org.junit.Before
 import org.junit.BeforeClass
 import java.io.File
 import java.lang.IllegalArgumentException
-import java.net.ServerSocket
-import java.nio.file.Files
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.Test
@@ -26,30 +24,29 @@ class TestMariaDBCustomerRepository {
         const val TABLE = "customers"
 
         /**
-         * A free port on the host, chosen anew at each run, so that parallel runs do not clash.
-         * Notice: the port is released before MariaDB binds it, so another process may steal it in the meanwhile.
+         * The port on the host where MariaDB will be reachable.
+         * Why not simply `MariaDB.DEFAULT_PORT` (i.e. 3306)?
+         * Think about two runs of this test suite, in parallel, on the same machine.
          */
-        val PORT: Int = ServerSocket(0).use { it.localPort }
+        val PORT: Int by lazy<Int> {
+            TODO("find a free port on the host. Hint: open a java.net.ServerSocket on port 0, and read its localPort")
+        }
 
         private lateinit var composeFile: File
 
         /**
-         * Copies the docker-compose.yml.template resource into a fresh temporary directory, as docker-compose.yml,
-         * replacing each `__KEY__` placeholder with the corresponding value in [assignments].
-         * The directory name is also the Docker Compose project name, hence each run gets its own
-         * containers, networks, and volumes.
+         * Generates the actual Docker Compose file from the docker-compose.yml.template resource.
+         *
+         * Why a fresh temporary *directory* for each run, rather than a fixed path (or just a temporary file)?
+         * Hint: how does Docker Compose choose the names of the containers, networks, and volumes it creates?
          */
         private fun createComposeFile(vararg assignments: Pair<String, String>): File {
-            val directory = Files.createTempDirectory("docker-compose-testing").toFile()
-            val path = directory.resolve("docker-compose.yml")
-            val template = TestMariaDBCustomerRepository::class.java
-                .getResource("docker-compose.yml.template")
-                ?.readText()
-                ?: error("docker-compose.yml.template resource not found")
-            path.writeText(
-                assignments.fold(template) { acc, (key, value) -> acc.replace("__${key}__", value) },
-            )
-            return path
+            // TODO 1. create a fresh temporary directory (cf. java.nio.file.Files.createTempDirectory)
+            // TODO 2. read the docker-compose.yml.template resource (cf. TestMariaDBCustomerRepository::class.java.getResource),
+            //  failing loudly if it is missing
+            // TODO 3. replace each `__KEY__` placeholder with the corresponding value, for each KEY in assignments
+            // TODO 4. write the result into a docker-compose.yml file inside the temporary directory, and return that file
+            TODO("generate the Compose file from the template, given ${assignments.size} assignments")
         }
 
         /**
@@ -57,13 +54,12 @@ class TestMariaDBCustomerRepository {
          * and makes the test fail if the exit value is not 0.
          */
         private fun executeDockerCompose(vararg arguments: String) {
-            val command = listOf("docker", "compose", "-f", composeFile.absolutePath) + arguments
-            val exitValue = ProcessBuilder(command).inheritIO().start().waitFor()
-            assertEquals(
-                expected = 0,
-                actual = exitValue,
-                message = "Command `${command.joinToString(" ")}` returned non-zero exit code: $exitValue",
-            )
+            // TODO 1. build the command line: docker compose -f <absolute path of composeFile> <arguments>
+            //  (-f is necessary, as composeFile is neither in the working directory, nor named compose.yaml)
+            // TODO 2. run it via java.lang.ProcessBuilder (cf. inheritIO(), to see Docker's output in the test logs)
+            // TODO 3. wait for the process to terminate
+            // TODO 4. assert that the exit value is 0, with an informative message
+            TODO("call docker compose ${arguments.joinToString(" ")}")
         }
 
         @BeforeClass
@@ -77,16 +73,18 @@ class TestMariaDBCustomerRepository {
                 "PASSWORD" to PASSWORD,
                 "PORT" to "$PORT",
             )
-            executeDockerCompose("up", "--wait")
-            executeDockerCompose("logs", "db", "--tail", "1")
+            // TODO start the stack, and return only when MariaDB is ready to accept connections
+            //  (cf. `docker compose up --help`: which option blocks until services are running/healthy?)
+            executeDockerCompose("TODO")
         }
 
         @AfterClass
         @JvmStatic
         fun tearDownMariaDb() {
-            executeDockerCompose("logs", "db")
-            executeDockerCompose("down", "--volumes")
-            composeFile.parentFile.deleteRecursively()
+            // TODO (optional) print the logs of the db service, useful to debug failures
+            // TODO stop the stack, removing *everything* it created (cf. `docker compose down --help`: volumes too?)
+            // TODO delete the temporary directory containing composeFile
+            executeDockerCompose("TODO")
         }
     }
 
