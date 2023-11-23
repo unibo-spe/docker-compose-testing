@@ -27,36 +27,19 @@ class TestMariaDBCustomerRepository {
         private lateinit var composeFile: File
 
         private fun createComposeFile(path: File, vararg assignments: Pair<String, String>): File {
-            val variablesAssignments = assignments.toMap()
-            TestMariaDBCustomerRepository::class.java.getResource("docker-compose.yml")
-                ?.openStream()?.bufferedReader()?.use { reader ->
-                    path.bufferedWriter().use { writer ->
-                        reader.forEachLine { line ->
-                            val newLine = variablesAssignments.entries.fold(line) { acc, (variable, value) ->
-                                acc.replace("__${variable}__", value)
-                            }
-                            writer.write(newLine)
-                            writer.newLine()
-                        }
-                    }
-                } ?: error("docker-compose.yaml resource not found")
-            return path
+            TODO("copy-paste the docker-compose.yml.template file into path, after applying the substitutions in assignments")
         }
 
-        private fun executeDockerCompose(vararg arguments: String, async: Boolean = false): Process {
-            val command = mutableListOf("docker", "compose", "-f", composeFile.absolutePath)
+        /**
+         * Calls `docker compose -f $composeFile $arguments and waits for its completion
+         * If async == false, waits for the command to terminate and asserts that the exit value is 0
+         */
+        private fun executeDockerCompose(vararg arguments: String): Process {
+            val command: MutableList<String> = TODO("call docker compose ensuring it will use $composeFile")
             command.addAll(arguments)
             return ProcessBuilder(command).inheritIO().start().also {
-                if (!async) {
-                    it.waitFor()
-                    assertEquals(
-                        expected = 0,
-                        actual = it.exitValue(),
-                        message = "Command `${command.joinToString(
-                            " ",
-                        )}` returned non-zero exit code: ${it.exitValue()}",
-                    )
-                }
+                TODO("wait for the process to terminate")
+                TODO("assert that the exit value is 0 (i.e. make the test fail if the docker compose command fails")
             }
         }
 
@@ -73,15 +56,13 @@ class TestMariaDBCustomerRepository {
                 "PORT" to "$PORT",
             )
 
-            executeDockerCompose("up", "--wait")
-            executeDockerCompose("logs", "db", "--tail", "1")
+            TODO("start the stack in $composeFile")
         }
 
         @AfterClass
         @JvmStatic
         fun tearDownMariaDb() {
-            executeDockerCompose("logs", "db")
-            executeDockerCompose("down", "--volumes")
+            TODO("stop the stack in $composeFile")
         }
     }
 
@@ -95,27 +76,10 @@ class TestMariaDBCustomerRepository {
     }
 
     private val taxCode = TaxCode("CTTGNN92D07D468M")
-
-    private val person = Customer.person(
-        taxCode,
-        "Giovanni",
-        "Ciatto",
-        LocalDate.of(1992, 4, 7),
-    )
-
-    private val person2 = person.clone(
-        birthDate = LocalDate.of(1992, 4, 8),
-        id = TaxCode("CTTGNN92D08D468M"),
-    )
-
+    private val person = Customer.person(taxCode, "Giovanni", "Ciatto", LocalDate.of(1992, 4, 7))
+    private val person2 = person.clone(birthDate = LocalDate.of(1992, 4, 8), id = TaxCode("CTTGNN92D08D468M"))
     private val vatNumber = VatNumber(12345678987L)
-
-    private val company = Customer.company(
-        vatNumber,
-        "ACME",
-        "Inc.",
-        LocalDate.of(1920, 1, 1),
-    )
+    private val company = Customer.company(vatNumber, "ACME", "Inc.", LocalDate.of(1920, 1, 1))
 
     @Test
     fun complexTestWhichShouldActuallyBeDecomposedInSmallerTests() {
