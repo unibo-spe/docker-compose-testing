@@ -2,7 +2,7 @@ services:
   db:
     # We use a mariadb image which supports both amd64 & arm64 architecture
     image: mariadb:__VERSION__
-    command: '--default-authentication-plugin=mysql_native_password'
+#   command: '--default-authentication-plugin=mysql_native_password'
     volumes:
       - db_data:/var/lib/mysql
     restart: always
@@ -14,12 +14,12 @@ services:
     ports:
       - "__PORT__:3306"
       - "33060:33060"
-    healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
-      start_period: 1m
-      start_interval: 10s
-      interval: 1m
-      timeout: 5s
-      retries: 3
+#   healthcheck:
+#     test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+#     start_period: 1m
+#     start_interval: 10s
+#     interval: 1m
+#     timeout: 5s
+#     retries: 3
 volumes:
   db_data:
