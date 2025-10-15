@@ -17,7 +17,7 @@ mariaDb-client = { module = "org.mariadb.jdbc:mariadb-java-client", version = "3
 kotlin-testing = [ "kotest-junit5-jvm", "kotest-assertions-core-jvm", "mockito-core" ]
 
 [plugins]
-dokka = "org.jetbrains.dokka:2.0.0"
+dokka = "org.jetbrains.dokka:2.1.0"
 gitSemVer = "org.danilopianini.git-sensitive-semantic-versioning:7.0.4"
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-qa = "org.danilopianini.gradle-kotlin-qa:0.95.1"
