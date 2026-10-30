@@ -1,4 +1,3 @@
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.gitSemVer)
     alias(libs.plugins.kotlin.jvm)
@@ -17,13 +16,10 @@ dependencies {
 }
 
 kotlin {
-    target {
-        compilations.all {
-            kotlinOptions {
-                allWarningsAsErrors = true
-                freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
-            }
-        }
+    jvmToolchain(25)
+    compilerOptions {
+        allWarningsAsErrors = true
+        optIn.add("kotlin.RequiresOptIn")
     }
 }
 
