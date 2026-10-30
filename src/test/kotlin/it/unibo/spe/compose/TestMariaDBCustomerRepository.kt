@@ -42,11 +42,12 @@ class TestMariaDBCustomerRepository {
         private fun createComposeFile(vararg assignments: Pair<String, String>): File {
             val directory = Files.createTempDirectory("docker-compose-testing").toFile()
             val path = directory.resolve("docker-compose.yml")
-            val template = TestMariaDBCustomerRepository::class.java.getResource("docker-compose.yml.template")
+            val template = TestMariaDBCustomerRepository::class.java
+                .getResource("docker-compose.yml.template")
                 ?.readText()
                 ?: error("docker-compose.yml.template resource not found")
             path.writeText(
-                assignments.fold(template) { acc, (variable, value) -> acc.replace("__${variable}__", value) },
+                assignments.fold(template) { acc, (key, value) -> acc.replace("__${key}__", value) },
             )
             return path
         }
