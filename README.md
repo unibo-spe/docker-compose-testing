@@ -27,42 +27,43 @@ and stopping it right after them.
 
 The test output includes the logs of `docker compose` and of the MariaDB container.
 
-## What is going on
+## The exercise
 
 The system under test is `SqlCustomerRepository`, a repository of customers backed by a SQL database (MariaDB).
-Its test, `TestMariaDBCustomerRepository`, needs a running MariaDB instance:
+Its test, [`TestMariaDBCustomerRepository`](src/test/kotlin/it/unibo/spe/compose/TestMariaDBCustomerRepository.kt),
+needs a running MariaDB instance, to be started via Docker Compose __before all tests__,
+and stopped __after all tests__.
 
-1. __before all tests__ (`@BeforeClass`):
-    1. the Compose file is generated from the [`docker-compose.yml.template`](src/test/resources/it/unibo/spe/compose/docker-compose.yml.template) resource,
-       replacing each `__NAME__` placeholder (image version, credentials, host port) with an actual value,
-       and written into a _fresh temporary directory_
-    2. `docker compose up --wait` starts MariaDB, and returns only once its _healthcheck_ passes,
-       i.e. once MariaDB accepts connections
-2. __before each test__ (`@Before`): the `customers` table is re-created, so that tests do not influence each other
-3. __each test__ (`@Test`) uses the repository, hence the database, and checks the results
-4. __after all tests__ (`@AfterClass`): `docker compose down --volumes` stops and removes
-   the container, the network, and the volume; then the temporary directory is deleted
+Your job is to complete the `companion object` of `TestMariaDBCustomerRepository`, following the `TODO`s therein:
 
-## Why a template, in a temporary directory?
+1. `PORT`: find a free port on the host
+2. `createComposeFile`: generate the actual Compose file from the
+   [`docker-compose.yml.template`](src/test/resources/it/unibo/spe/compose/docker-compose.yml.template) resource,
+   into a fresh temporary directory
+3. `executeDockerCompose`: call `docker compose` from Kotlin, via `ProcessBuilder`
+4. `setUpMariaDb` / `tearDownMariaDb`: start and stop the stack, with the right `docker compose` options
+5. run the tests (`./gradlew test`): do they pass _reliably_? If not, fix the template
 
-To allow for __parallel runs__ of the test suite on the same machine (e.g. several CI jobs on the same runner),
-and to prevent one run from __polluting__ another one:
+Nothing outside the test class and the template needs to be changed.
 
-- __host ports__ are global to the machine: two stacks cannot both publish MariaDB on `3306`,
-  so each run picks a random free port, and injects it into the template (`__PORT__`)
-- Docker Compose names containers, networks, and volumes after the __project name__,
-  which defaults to the name of the directory containing the Compose file:
-  a fresh temporary directory per run means a distinct project per run,
-  hence distinct containers, networks, and volumes
-- credentials, too, are chosen per run (e.g. a random root password)
+### Questions to answer along the way
+
+- Why is the Compose file generated from a _template_, instead of being a static file?
+- Why is it written into a fresh temporary _directory_, at each run?
+  (Hint: how does Docker Compose name the containers, networks, and volumes it creates?)
+- Why should the host port not be hard-coded?
+  (Hint: what if two runs of the test suite happen in parallel, on the same machine?)
+- What does `docker compose up --wait` actually wait for?
+- What is left on your machine after the tests, if `docker compose down` is called _without_ `--volumes`?
 
 ## Troubleshooting
 
 | Symptom                                       | Likely cause                                                             |
 |-----------------------------------------------|--------------------------------------------------------------------------|
+| `NotImplementedError`                         | some `TODO()` is still there                                             |
 | `Cannot connect to the Docker daemon`         | Docker is not running                                                    |
 | `unknown shorthand flag: 'f'` / `unknown command: docker compose` | the Compose plugin is not installed (old `docker-compose` v1 only)      |
-| connection errors in `createFreshTable`       | MariaDB is not ready yet: is the `healthcheck` in the template?          |
+| connection errors in `createFreshTable`       | MariaDB is not ready yet: see step 5                                     |
 | `port is already allocated`                   | another process grabbed the chosen port in the meanwhile: just re-run    |
 
 Leftovers of interrupted runs can be found with `docker ps -a` and `docker volume ls`
